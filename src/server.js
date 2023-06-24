@@ -22,12 +22,23 @@ const httpServer = http.createServer(app);
 // SocketIO 서버 구동 
 const wsServer = new Server(httpServer);
 wsServer.on("connection", (socket) => {
+    socket.onAny((event) => {
+        console.log(`Socket Event: ${event}`);
+    })
     socket.on("enter_room", (roomName, done) => {
-        console.log(roomName);
-        setTimeout(() => {
-            // 백엔드에서 실행시키는게 아님(보안문제 발생)
-            done("hello from the backend");
-        } ,5000);
+        socket.join(roomName.payload);
+        // 백엔드에서 실행시키는게 아님(보안문제 발생)
+        done();
+        socket.to(roomName.payload).emit("welcome");
+    });
+    socket.on("disconnecting", () => {
+        socket.rooms.forEach((room) => {
+            socket.to(room).emit("bye");
+        })
+    });
+    socket.on("new_message", (msg, room, done) => {
+        socket.to(room).emit("new_message", msg);
+        done();
     });
 });
 

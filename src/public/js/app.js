@@ -46,9 +46,37 @@ const socket = io();
 
 const welcome = document.querySelector("#welcome");
 const form = welcome.querySelector("form");
+const room = document.querySelector("#room");
 
-function backendDone(msg) {
-    console.log(`The backend says: `, msg);
+room.hidden = true;
+
+let roomName;
+
+function addMessage(message) {
+    const ul = room.querySelector("ul");
+    const li = document.createElement("li");
+    li.innerText = message;
+    ul.appendChild(li);
+}
+
+function handleMessageSubmit(event) {
+    event.preventDefault();
+    const input = room.querySelector("input");
+    const value = input.value;
+    socket.emit("new_message", input.value, roomName, () => {
+        // input.value를 출력하고, 후에 입력값을 비워주게 되면 서버에서 콜백함수를 호출 시 이미 비워진 값이므로 비워진 값이 출력되는 에러 발생 => 입력값을 잠시 저장해 둘 변수 필요
+        addMessage(`You: ${value}`);
+    });
+    input.value = "";
+}
+
+function showRoom() {
+    welcome.hidden = true;
+    room.hidden = false;
+    const roomNameTitle = room.querySelector("#roomName");
+    roomNameTitle.innerText = `Room ${roomName}`;
+    const form = room.querySelector("form");
+    form.addEventListener("submit", handleMessageSubmit);
 }
 
 function handleRoomSubmit(event) {
@@ -58,7 +86,18 @@ function handleRoomSubmit(event) {
     // event명: 특정한 event를 보내거나 받을 수 있으며, 해당 event는 어느 것이든 될 수 있음
     // arg1: message => 이 경우 JSON이며, socketio는 알아서 stringify, parse과정을 수행함
     // arg2: callback function => 콜백함수를 실행(서버에 던져줌), 백엔드는 해당 함수를 호출
-    socket.emit("enter_room", { payload: input.value }, backendDone);
+    socket.emit("enter_room", {payload: input.value}, showRoom);
+    roomName = input.value;
     input.value = "";
 }
 form.addEventListener("submit", handleRoomSubmit);
+
+socket.on("welcome", () => {
+    addMessage("someone joined!");
+});
+
+socket.on("bye", () => {
+    addMessage("someone left!");
+})
+
+socket.on("new_message", addMessage);
