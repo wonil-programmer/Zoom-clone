@@ -22,8 +22,14 @@ const httpServer = http.createServer(app);
 // SocketIO 서버 구동 
 const wsServer = new Server(httpServer);
 wsServer.on("connection", (socket) => {
-    console.log(socket);
-})
+    socket.on("enter_room", (roomName, done) => {
+        console.log(roomName);
+        setTimeout(() => {
+            // 백엔드에서 실행시키는게 아님(보안문제 발생)
+            done("hello from the backend");
+        } ,5000);
+    });
+});
 
 
 

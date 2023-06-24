@@ -41,4 +41,24 @@
 // messageForm.addEventListener("submit", handleSubmit);
 // nickForm.addEventListener("submit", handleNickSubmit);
 
-const socket = io(); // SocketIO: io function은 알아서 socket.io를 실행하고 있는 서버를 찾음
+const socket = io(); 
+// SocketIO: io function은 알아서 socket.io를 실행하고 있는 서버를 찾음
+
+const welcome = document.querySelector("#welcome");
+const form = welcome.querySelector("form");
+
+function backendDone(msg) {
+    console.log(`The backend says: `, msg);
+}
+
+function handleRoomSubmit(event) {
+    event.preventDefault();
+    const input = form.querySelector("input");
+    // emit: 
+    // event명: 특정한 event를 보내거나 받을 수 있으며, 해당 event는 어느 것이든 될 수 있음
+    // arg1: message => 이 경우 JSON이며, socketio는 알아서 stringify, parse과정을 수행함
+    // arg2: callback function => 콜백함수를 실행(서버에 던져줌), 백엔드는 해당 함수를 호출
+    socket.emit("enter_room", { payload: input.value }, backendDone);
+    input.value = "";
+}
+form.addEventListener("submit", handleRoomSubmit);
