@@ -22,6 +22,7 @@ const httpServer = http.createServer(app);
 // SocketIO 서버 구동 
 const wsServer = new Server(httpServer);
 wsServer.on("connection", (socket) => {
+    socket["nickname"] = "Anon";
     socket.onAny((event) => {
         console.log(`Socket Event: ${event}`);
     })
@@ -37,9 +38,10 @@ wsServer.on("connection", (socket) => {
         })
     });
     socket.on("new_message", (msg, room, done) => {
-        socket.to(room).emit("new_message", msg);
+        socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
         done();
     });
+    socket.on("nickname", nickname => socket["nickname"] = nickname)
 });
 
 

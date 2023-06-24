@@ -61,7 +61,7 @@ function addMessage(message) {
 
 function handleMessageSubmit(event) {
     event.preventDefault();
-    const input = room.querySelector("input");
+    const input = room.querySelector("#msg input");
     const value = input.value;
     socket.emit("new_message", input.value, roomName, () => {
         // input.value를 출력하고, 후에 입력값을 비워주게 되면 서버에서 콜백함수를 호출 시 이미 비워진 값이므로 비워진 값이 출력되는 에러 발생 => 입력값을 잠시 저장해 둘 변수 필요
@@ -70,13 +70,21 @@ function handleMessageSubmit(event) {
     input.value = "";
 }
 
+function handleNicknameSubmit(event) {
+    event.preventDefault();
+    const input = room.querySelector("#name input");
+    socket.emit("nickname", input.value);
+}
+
 function showRoom() {
     welcome.hidden = true;
     room.hidden = false;
     const roomNameTitle = room.querySelector("#roomName");
     roomNameTitle.innerText = `Room ${roomName}`;
-    const form = room.querySelector("form");
-    form.addEventListener("submit", handleMessageSubmit);
+    const msgForm = room.querySelector("#msg");
+    const nameForm = room.querySelector("#name");
+    msgForm.addEventListener("submit", handleMessageSubmit);
+    nameForm.addEventListener("submit", handleNicknameSubmit);
 }
 
 function handleRoomSubmit(event) {
