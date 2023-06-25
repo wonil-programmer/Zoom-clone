@@ -19,6 +19,9 @@ const httpServer = http.createServer(app);
 // const wss = new WebSocket.Server({ server });
 // const sockets = [];
 
+// SocketIO 서버 구동 
+const wsServer = new Server(httpServer);
+
 function publicRooms() {
     const {
         sockets: {
@@ -36,24 +39,26 @@ function publicRooms() {
     return publicRooms;
 }
 
-// SocketIO 서버 구동 
-const wsServer = new Server(httpServer);
+function countRoom(roomName) {
+    return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
+
 wsServer.on("connection", (socket) => {
     socket["nickname"] = "Anon";
     socket.onAny((event) => {
-        console.log(wsServer.sockets.adapter);
+        console.log(wsServer.sockets.adapter.rooms);
         console.log(`Socket Event: ${event}`);
     })
     socket.on("enter_room", (roomName, done) => {
-        socket.join(roomName.payload);
+        socket.join(roomName);
         // 백엔드에서 실행시키는게 아님(보안문제 발생)
         done();
-        socket.to(roomName.payload).emit("welcome", socket.nickname);
+        socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
         wsServer.sockets.emit("room_change", publicRooms());
     });
     socket.on("disconnecting", () => {
         socket.rooms.forEach((room) => {
-            socket.to(room).emit("bye", socket.nickname);
+            socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1);
         })
     });
     socket.on("disconnect", () => {

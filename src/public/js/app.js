@@ -59,6 +59,11 @@ function addMessage(message) {
     ul.appendChild(li);
 }
 
+// function refreshCount(count) {
+//     const roomNameTitle = room.querySelector("#roomName");
+//     roomNameTitle.innerText = `Room ${roomName} (${count})`;
+// }
+
 function handleMessageSubmit(event) {
     event.preventDefault();
     const input = room.querySelector("#msg input");
@@ -94,17 +99,25 @@ function handleRoomSubmit(event) {
     // event명: 특정한 event를 보내거나 받을 수 있으며, 해당 event는 어느 것이든 될 수 있음
     // arg1: message => 이 경우 JSON이며, socketio는 알아서 stringify, parse과정을 수행함
     // arg2: callback function => 콜백함수를 실행(서버에 던져줌), 백엔드는 해당 함수를 호출
-    socket.emit("enter_room", {payload: input.value}, showRoom);
+    socket.emit("enter_room", input.value, showRoom);
     roomName = input.value;
     input.value = "";
 }
 form.addEventListener("submit", handleRoomSubmit);
 
-socket.on("welcome", (user) => {
+socket.on("welcome", (user, newCount) => {
+    console.log(`새카운트: ${newCount}`);
+    const roomNameTitle = room.querySelector("#roomName");
+    roomNameTitle.innerText = `Room ${roomName} (${newCount})`;
+    // refreshCount(newCount);
     addMessage(`${user} arrived!`);
 });
 
-socket.on("bye", (left) => {
+socket.on("bye", (left, newCount) => {
+    console.log(`새카운트: ${newCount}`);
+    const roomNameTitle = room.querySelector("#roomName");
+    roomNameTitle.innerText = `Room ${roomName} (${newCount})`;
+    // refreshCount(newCount);
     addMessage(`${left} left!`);
 })
 
