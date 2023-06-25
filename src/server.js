@@ -19,24 +19,46 @@ const httpServer = http.createServer(app);
 // const wss = new WebSocket.Server({ server });
 // const sockets = [];
 
+function publicRooms() {
+    const {
+        sockets: {
+            // sids: 모든 소켓(private room) / rooms: 모든 방 => rooms는 sids를 포함
+            adapter: {sids, rooms},
+        },
+    } = wsServer;
+    const publicRooms = [];
+    // 공개방 필터링
+    rooms.forEach((_, key) => {
+        if (sids.get(key) === undefined) {
+            publicRooms.push(key);
+        }
+    });
+    return publicRooms;
+}
+
 // SocketIO 서버 구동 
 const wsServer = new Server(httpServer);
 wsServer.on("connection", (socket) => {
     socket["nickname"] = "Anon";
     socket.onAny((event) => {
+        console.log(wsServer.sockets.adapter);
         console.log(`Socket Event: ${event}`);
     })
     socket.on("enter_room", (roomName, done) => {
         socket.join(roomName.payload);
         // 백엔드에서 실행시키는게 아님(보안문제 발생)
         done();
-        socket.to(roomName.payload).emit("welcome");
+        socket.to(roomName.payload).emit("welcome", socket.nickname);
+        wsServer.sockets.emit("room_change", publicRooms());
     });
     socket.on("disconnecting", () => {
         socket.rooms.forEach((room) => {
-            socket.to(room).emit("bye");
+            socket.to(room).emit("bye", socket.nickname);
         })
     });
+    socket.on("disconnect", () => {
+        wsServer.sockets.emit("room_change", publicRooms());
+    })
     socket.on("new_message", (msg, room, done) => {
         socket.to(room).emit("new_message", `${socket.nickname}: ${msg}`);
         done();
